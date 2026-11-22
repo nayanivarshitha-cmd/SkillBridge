@@ -1,0 +1,133 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>SkillBridge</title>
+<style>
+:root{--bg:#f5f6fb;--c:#fff;--t:#1b1f33;--m:#666c86;--p:#4f46e5;--b:#e2e4ef;--g:#16a34a;--mk:#fde68a;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#12141f;--c:#1c2033;--t:#eceefa;--m:#9aa0bd;--p:#8b87ff;--b:#2c3150;--mk:#6b5b00;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#12141f;--c:#1c2033;--t:#eceefa;--m:#9aa0bd;--p:#8b87ff;--b:#2c3150;--mk:#6b5b00;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:10px 18px;background:var(--c);border-bottom:1px solid var(--b)}
+nav{display:flex;gap:6px;flex-wrap:wrap}main{max-width:1050px;margin:0 auto;padding:18px}
+button,input,select,textarea{font:inherit;color:inherit;background:var(--c);border:1px solid var(--b);border-radius:8px;padding:8px 12px}
+button{cursor:pointer}button.on,button.pri{background:var(--p);color:#fff;border-color:var(--p)}
+input,select,textarea{width:100%;margin:4px 0}input[type=range]{padding:0}
+.card{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.stat{cursor:pointer;margin:0}.stat b{display:block;font-size:30px;color:var(--p)}.m{color:var(--m);font-size:13px}
+.bar{height:8px;background:var(--b);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--p)}
+.ring{--v:0;width:120px;height:120px;border-radius:50%;background:conic-gradient(var(--p) calc(var(--v)*1%),var(--b) 0);display:grid;place-items:center;margin:auto}.ring b{background:var(--c);width:88px;height:88px;border-radius:50%;display:grid;place-items:center;font-size:22px}
+.donut{width:110px;height:110px;border-radius:50%;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.auth{max-width:400px;margin:8vh auto}.row{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+pre.tx{white-space:pre-wrap;font:inherit;max-height:60vh;overflow:auto}mark{background:var(--mk);color:inherit}
+table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:6px;border-bottom:1px solid var(--b)}.wrap{overflow-x:auto}
+#ts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--t);color:var(--bg);padding:8px 16px;border-radius:8px;display:none;z-index:9}
+</style></head><body><div id="app"></div><div id="ts"></div>
+<script>
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),uid=()=>crypto.randomUUID(),wc=t=>(t.match(/\S+/g)||[]).length;
+let DB={users:[],data:{}},U=null,D=null,V='dash',PID=null,PT='read',MODE='quick',AM='login',SF='all',Q='',YF='',EID=null,DEL=null,CACHE={};
+const CATS=['Programming','AI','Communication','Technical','Design','Research','Other'],LV=['Beginner','Intermediate','Advanced','Expert'],COL=['#4f46e5','#06b6d4','#f59e0b','#16a34a','#ec4899','#8b5cf6','#64748b'];
+let ADM=[],T;
+async function api(u,m,b,f){const r=await fetch(u,{method:m||'GET',headers:b&&!f?{'Content-Type':'application/json'}:{},body:f||(b?JSON.stringify(b):undefined),credentials:'same-origin'});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Request failed');return j}
+function save(){clearTimeout(T);T=setTimeout(()=>api('/api/data','PUT',D).catch(()=>toast('Could not save to server')),300)}
+function toast(m){const t=$('ts');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3200)}
+const act=m=>{D.acts.unshift({t:Date.now(),m});D.acts=D.acts.slice(0,15)};
+async function start(u,d){U=u;D=d;V=u.role=='admin'?'admin':'dash';if(u.role=='admin'){try{ADM=(await api('/api/admin/users')).users}catch(e){}}R()}
+async function out(){try{await api('/api/logout','POST')}catch(e){}U=D=null;AM='login';R()}
+async function auth(){const e=$('e').value.trim().toLowerCase(),p=$('pw').value,n=AM=='reg'?$('n').value.trim():'';
+try{const r=await api(AM=='reg'?'/api/register':'/api/login','POST',{email:e,password:p,name:n,role:AM=='admin'?'admin':'student'});const reg=AM=='reg';await start(r.user,r.data);if(reg){act('Joined SkillBridge');save()}}catch(x){toast(x.message)}}
+async function demo(){try{const r=await api('/api/login','POST',{email:'demo@skillbridge.edu',password:'Demo@123',role:'student'});await start(r.user,r.data)}catch(x){toast(x.message)}}
+function R(){const a=$('app');if(!U){a.innerHTML=authV();return}
+if(U.role!='admin'&&V=='admin')V='dash';if(U.role=='admin')V='admin';
+const nav=U.role=='admin'?'':`<nav>${[['dash','Dashboard'],['skills','SkillTrack'],['research','ResearchBridge']].map(([k,l])=>`<button class="${V==k||(k=='research'&&V=='paper')?'on':''}" onclick="V='${k}';R()">${l}</button>`).join('')}</nav>`;
+a.innerHTML=`<header><b>SkillBridge${U.role=='admin'?' · Admin':''}</b>${nav}<span class="m">${esc(U.name)} <button onclick="out()">Logout</button></span></header><main>${({dash:dashV,skills:skillV,research:resV,paper:paperV,admin:adminV})[V]()}</main>`}
+function authV(){return`<div class="auth card"><h1 style="margin:0">SkillBridge</h1><p class="m">SkillTrack + ResearchBridge: skills, certifications and research in one place.</p>
+<div class="tabs">${[['login','Student login'],['reg','Register'],['admin','Admin']].map(([k,l])=>`<button class="${AM==k?'on':''}" onclick="AM='${k}';R()">${l}</button>`).join('')}</div>
+${AM=='reg'?'<input id="n" placeholder="Full name">':''}<input id="e" type="email" placeholder="Email" ${AM=='admin'?'value="admin@skillbridge.edu"':''}><input id="pw" type="password" placeholder="Password (min 6 characters)" onkeydown="event.key=='Enter'&&auth()">
+<button class="pri" onclick="auth()">${AM=='reg'?'Create account':'Sign in'}</button>${AM=='login'?'<button onclick="demo()" style="margin-top:8px;width:100%">Try the demo (sample data)</button><p class="m">Demo student: demo@skillbridge.edu / Demo@123</p>':''}${AM=='admin'?'<p class="m">Demo admin: admin@skillbridge.edu / Admin@123</p>':''}</div>`}
+const bar=(n,p)=>`<div class="row"><span>${esc(n)}</span><span class="m">${p}%</span></div><div class="bar"><i style="width:${p}%"></i></div>`;
+const ago=t=>new Date(t).toLocaleDateString()+' '+new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+function dashV(){const s=D.skills,avg=s.length?Math.round(s.reduce((a,x)=>a+x.p,0)/s.length):0,cc=CATS.map(c=>[c,s.filter(x=>x.c==c).length]).filter(x=>x[1]);let acc=0;
+const cg=cc.length?'conic-gradient('+cc.map((x,i)=>{const a=acc/s.length*100;acc+=x[1];return COL[i]+' '+a+'% '+acc/s.length*100+'%'}).join(',')+')':'var(--b)';
+const rec=D.viewed.map(id=>D.papers.find(p=>p.id==id)).filter(Boolean).slice(0,5);
+return`<h2>Welcome back, ${esc(U.name.split(' ')[0])}</h2><div class="grid">${[['Skills added',s.length,'skills'],['Certifications',D.certs.length,'skills'],['Papers uploaded',D.papers.length,'research'],['Skills completed',s.filter(x=>x.p>=100).length,'skills']].map(x=>`<div class="card stat" onclick="V='${x[2]}';R()"><span class="m">${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>
+<div class="grid2"><div class="card"><h3>Learning progress</h3><div class="ring" style="--v:${avg}"><b>${avg}%</b></div><p class="m" style="text-align:center">Average across all skills</p></div>
+<div class="card"><h3>Skills by category</h3><div class="donut" style="background:${cg}"></div>${cc.map((x,i)=>`<div class="m"><span style="color:${COL[i]}">●</span> ${x[0]}: ${x[1]}</div>`).join('')||'<p class="m">No skills yet.</p>'}</div>
+<div class="card"><h3>Top skills</h3>${s.slice().sort((a,b)=>b.p-a.p).slice(0,5).map(x=>bar(x.n,x.p)).join('')||'<p class="m">Add skills in SkillTrack.</p>'}</div>
+<div class="card"><h3>Recently viewed papers</h3>${rec.map(p=>`<div><a href="#" onclick="openP('${p.id}');return false">${esc(p.title)}</a></div>`).join('')||'<p class="m">None yet.</p>'}</div>
+<div class="card"><h3>Recent activity</h3>${D.acts.slice(0,8).map(a=>`<div class="m">${ago(a.t)}: ${esc(a.m)}</div>`).join('')||'<p class="m">No activity yet.</p>'}</div>
+<div class="card"><h3>Quick access</h3><button class="pri" onclick="V='skills';R()">Open SkillTrack</button> <button class="pri" onclick="V='research';R()">Open ResearchBridge</button></div></div>`}
+function skillV(){const e=D.skills.find(x=>x.id==EID)||{},L=D.skills.filter(x=>SF=='all'||(SF=='done')==(x.p>=100)),cat=CATS.map(c=>{const a=D.skills.filter(x=>x.c==c);return a.length?bar(c,Math.round(a.reduce((s,x)=>s+x.p,0)/a.length)):''}).join('');
+return`<h2>SkillTrack</h2><div class="grid2"><div class="card"><h3>${e.id?'Edit':'Add'} skill</h3><input id="sn" placeholder="Skill name" value="${esc(e.n)}">
+<select id="sc">${CATS.map(c=>`<option ${e.c==c?'selected':''}>${c}</option>`).join('')}</select><select id="sl">${LV.map(c=>`<option ${e.l==c?'selected':''}>${c}</option>`).join('')}</select>
+<label class="m">Progress: <span id="pv">${e.p||0}</span>%</label><input id="sp" type="range" min="0" max="100" value="${e.p||0}" oninput="$('pv').textContent=this.value">
+<input id="sg" placeholder="Learning goal (e.g. finish course by December)" value="${esc(e.g)}"><button class="pri" onclick="saveSkill()">Save skill</button>${e.id?' <button onclick="EID=null;R()">Cancel</button>':''}</div>
+<div class="card"><h3>Average progress by category</h3>${cat||'<p class="m">No data yet.</p>'}</div></div>
+<div class="card"><div class="row"><h3>My skills</h3><span>${[['all','All'],['ong','Ongoing'],['done','Completed']].map(([k,l])=>`<button class="${SF==k?'on':''}" onclick="SF='${k}';R()">${l}</button>`).join(' ')}</span></div>
+${L.map(x=>`<div class="card" style="margin:8px 0"><div class="row"><b>${esc(x.n)}</b><span class="m">${x.c} · ${x.l} · ${x.p>=100?'Completed':'Ongoing'}</span></div>${bar('',x.p)}${x.g?`<p class="m">Goal: ${esc(x.g)}</p>`:''}<button onclick="bump('${x.id}')">+10%</button> <button onclick="EID='${x.id}';R()">Edit</button> <button onclick="delS('${x.id}')">Delete</button></div>`).join('')||'<p class="m">Nothing here yet.</p>'}</div>
+<div class="card"><h3>Certifications</h3><div class="grid"><input id="cn" placeholder="Certification name"><input id="co" placeholder="Issuing organization"><input id="cd" type="date"><button class="pri" onclick="addC()">Add</button></div>
+${D.certs.map(c=>`<div class="row"><span><b>${esc(c.n)}</b> · ${esc(c.o)} · ${esc(c.d)}</span><button onclick="delC('${c.id}')">Delete</button></div>`).join('')||'<p class="m">No certifications yet.</p>'}</div>`}
+function saveSkill(){const n=$('sn').value.trim();if(!n)return toast('Skill name is required');const v={n,c:$('sc').value,l:$('sl').value,p:+$('sp').value,g:$('sg').value.trim()},e=D.skills.find(x=>x.id==EID);
+if(e){Object.assign(e,v);act('Updated skill: '+n)}else{D.skills.push({id:uid(),t:Date.now(),...v});act('Added skill: '+n)}EID=null;save();R()}
+function bump(id){const s=D.skills.find(x=>x.id==id);s.p=Math.min(100,s.p+10);act(`Progress on ${s.n}: ${s.p}%`);save();R()}
+function delS(id){const s=D.skills.find(x=>x.id==id);D.skills=D.skills.filter(x=>x.id!=id);act('Deleted skill: '+s.n);save();R()}
+function addC(){const n=$('cn').value.trim(),o=$('co').value.trim(),d=$('cd').value;if(!n||!o||!d)return toast('Fill name, organization and date');D.certs.push({id:uid(),n,o,d});act('Added certification: '+n);save();R()}
+function delC(id){D.certs=D.certs.filter(x=>x.id!=id);save();R()}
+function plist(){const q=Q.toLowerCase(),L=D.papers.filter(p=>(!YF||p.year==YF)&&(p.title+' '+p.authors+' '+p.year+' '+p.kw).toLowerCase().includes(q));
+return L.map(p=>`<div class="card" style="margin:8px 0"><div class="row"><b>${esc(p.title)}</b><span class="m">${esc(p.year)} ${p.saved?'· summary saved':''}</span></div><div class="m">${esc(p.authors)}</div><div class="m">Keywords: ${esc(p.kw)||'-'}</div><button class="pri" onclick="openP('${p.id}')">Open</button> <button onclick="delP('${p.id}')">Delete</button></div>`).join('')||'<p class="m">No papers match.</p>'}
+function resV(){const ys=[...new Set(D.papers.map(p=>p.year).filter(Boolean))].sort();
+return`<h2>ResearchBridge</h2><div class="card"><h3>Upload a research paper (PDF)</h3><input type="file" accept="application/pdf" onchange="up(this)"><p class="m" id="us">Text is extracted on the server. Large PDFs may take a few seconds.</p></div>
+<div class="card"><h3>My library (${D.papers.length})</h3><div class="grid"><input placeholder="Search title, author, keyword, year" value="${esc(Q)}" oninput="Q=this.value;$('pl').innerHTML=plist()"><select onchange="YF=this.value;$('pl').innerHTML=plist()"><option value="">All years</option>${ys.map(y=>`<option ${YF==y?'selected':''}>${esc(y)}</option>`).join('')}</select></div><div id="pl">${plist()}</div></div>`}
+async function extract(f){const fd=new FormData();fd.append('pdf',f);return api('/api/extract','POST',null,fd)}
+async function up(inp){const f=inp.files[0];if(!f)return;const st=m=>$('us')&&($('us').textContent=m);st('Extracting text from '+f.name+'…');
+try{const r=await extract(f),t=r.t,ln=r.first.split('\n').map(x=>x.trim()).filter(x=>x.length>10&&x.length<200);
+const title=(r.info.Title||'').trim()||ln[0]||f.name.replace(/\.pdf$/i,''),authors=(r.info.Author||'').trim(),y=(t.slice(0,4000).match(/\b(19|20)\d{2}\b/)||[''])[0];
+const km=t.match(/keywords?\s*[:—-]\s*([^\n]{5,200})/i),kw=km?km[1].trim():topWords(t,8).map(x=>x[0]).join(', ');
+D.papers.unshift({id:uid(),title,authors,year:y,kw,text:t.slice(0,200000),notes:'',hl:[],pages:r.pages,t:Date.now(),saved:null});act('Uploaded paper: '+title);save();
+if(t.length<500)toast('Very little text found: this PDF may be a scan');R()}catch(e){st('Could not read this PDF: '+e.message)}}
+function openP(id){PID=id;PT='read';V='paper';D.viewed=[id,...D.viewed.filter(x=>x!=id)].slice(0,10);save();R()}
+function delP(id){D.papers=D.papers.filter(x=>x.id!=id);delete CACHE[id];save();R()}
+function paperV(){const p=D.papers.find(x=>x.id==PID);if(!p){V='research';return resV()}
+return`<button onclick="V='research';R()">← Library</button><h2>${esc(p.title)}</h2><p class="m">${esc(p.authors||'Authors not set')} · ${esc(p.year||'Year not set')} · ${p.pages} pages · full paper ≈ ${Math.ceil(wc(p.text)/200)} min read</p>
+<div class="tabs">${[['read','Quick Research Reader'],['text','Full text'],['notes','Notes'],['info','Details']].map(([k,l])=>`<button class="${PT==k?'on':''}" onclick="PT='${k}';R()">${l}</button>`).join('')}</div>${({read:readV,text:textV,notes:notesV,info:infoV})[PT](p)}`}
+const SW=new Set('the of and to in is that for with as on by this are be from or an at which it we was were has have not can also these their our its been more such than using used based other between into they there when where while however thus then than will would could should may might both each many some most only very over under after before about what whose those them his her you your all any one two three paper study results show shown figure table'.split(' '));
+const words=t=>t.toLowerCase().match(/[a-z][a-z-]{3,}/g)||[];
+function topWords(t,k,min){const f={};words(t).forEach(w=>{if(!SW.has(w)&&w.length>(min||4))f[w]=(f[w]||0)+1});return Object.entries(f).sort((a,b)=>b[1]-a[1]).slice(0,k)}
+function sents(t){return(t.replace(/\s+/g,' ').match(/[^.!?]+[.!?](?=\s|$)/g)||[]).map(s=>s.trim()).filter(s=>s.length>45&&s.length<420&&!/https?:|doi:|©|^\W*(figure|table|fig\.)/i.test(s))}
+function analyze(p){const t=p.text,S=sents(t),n=S.length,f={};words(t).forEach(w=>{if(!SW.has(w))f[w]=(f[w]||0)+1});
+const sc=S.map(s=>{const w=words(s).filter(x=>!SW.has(x));return w.reduce((a,x)=>a+(f[x]||0),0)/Math.sqrt(w.length+2)}),mx=Math.max(...sc,1);
+const top=(k,ix)=>ix.sort((a,b)=>sc[b]-sc[a]).slice(0,k).sort((a,b)=>a-b).map(i=>S[i]),all=()=>S.map((_,i)=>i);
+const cue=(re,a,b,k)=>{const r=new RegExp(re,'gi'),m=S.map((s,i)=>[i,(s.match(r)||[]).length,sc[i]/mx]).filter(x=>x[1]>0&&x[0]>=n*a&&x[0]<=n*b).sort((x,y)=>(y[1]+y[2])-(x[1]+x[2])).slice(0,k).map(x=>x[0]).sort((x,y)=>x-y);return m.map(i=>S[i])};
+const ac={},stop=new Set(['THE','AND','PDF','FIG','ABSTRACT','INTRODUCTION','CONCLUSION','TABLE','USA','ISSN','DOI','REFERENCES']);(t.match(/\b[A-Z]{2,6}s?\b/g)||[]).forEach(a=>{if(!stop.has(a))ac[a]=(ac[a]||0)+1});
+const tech=Object.entries(ac).filter(x=>x[1]>=2).sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>`${x[0]} (mentioned ${x[1]}×)`).concat(topWords(t,6,5).map(x=>`${x[0]} (mentioned ${x[1]}×)`));
+const kws=(p.kw||'').split(/[,;]/).map(x=>x.trim()).filter(Boolean);
+return{one:top(4,all()),five:top(Math.min(12,n),all()),full:top(Math.min(40,Math.ceil(n*.3)),all()),prob:cue('problem|challenge|issue|gap|lack|limited|difficult|however|need for|motivat',0,.3,3),obj:cue('objective|aim|goal|purpose|propose|we present|this paper|this study|this work|investigate',0,.35,3),
+meth:cue('method|approach|dataset|data set|experiment|algorithm|model|framework|we use|implement|trained|participants|sample|procedure',.1,.75,5),res:cue('result|show|achiev|outperform|accuracy|improv|found|demonstrat|significant|compared|performance',.4,1,5),
+lim:cue('limitation|limited to|drawback|constraint|cannot|unable|fails|shortcoming|restrict|bias|weakness',.3,1,3),fut:cue('future work|future research|future stud|in the future|further research|further work|extended|plan to|remain to be',.5,1,3),
+tech,kw:kws.length?kws:topWords(t,10).map(x=>x[0]),pts:top(6,all())}}
+function secs(p,mode){const a=CACHE[p.id]||(CACHE[p.id]=analyze(p)),N=['Not clearly stated in the extracted text.'],
+d=[['one','1. One-minute summary'],['five','2. Five-minute explanation'],['full','3. Complete simplified explanation (condensed from the paper’s own sentences)'],['prob','4. Research problem statement'],['obj','5. Research objectives'],['meth','6. Research methodology'],['tech','7. Important technologies and concepts',1],['res','8. Main results and findings'],['lim','9. Limitations of the research'],['fut','10. Future research possibilities'],['kw','11. Important keywords',1],['pts','12. Important points to remember',1]],
+pick={quick:['one','kw'],standard:['five','prob','obj','res','kw'],deep:d.map(x=>x[0])}[mode];
+return d.filter(x=>pick.includes(x[0])).map(x=>({h:x[1],a:a[x[0]].length?a[x[0]]:N,l:!!x[2]||x[0]=='pts'}))}
+const stext=(S,p)=>S.map(s=>s.h+'\n'+(s.l?s.a.map(x=>'• '+x).join('\n'):s.a.join(' '))).join('\n\n');
+function readV(p){const S=secs(p,MODE),tx=stext(S,p),min=Math.max(1,Math.ceil(wc(tx)/200));
+return`<div class="card"><div class="tabs">${[['quick','Quick Read'],['standard','Standard Read'],['deep','Deep Read']].map(([k,l])=>`<button class="${MODE==k?'on':''}" onclick="MODE='${k}';R()">${l}</button>`).join('')}</div>
+<p class="m">≈ ${min} min to read this summary vs ≈ ${Math.ceil(wc(p.text)/200)} min for the full paper. Every sentence below is extracted from your PDF; nothing is invented.</p>${p.text.length<500?'<p><b>Little readable text was found. This PDF may be scanned images.</b></p>':''}
+<button class="pri" onclick="saveSum()">Save summary</button> <button onclick="copyT(curText())">Copy</button> <button onclick="dlSum()">Download</button>${p.saved?`<span class="m"> Saved (${p.saved.mode}, ${ago(p.saved.t)})</span>`:''}</div>
+${S.map(s=>`<div class="card"><h3>${esc(s.h)}</h3>${s.l?'<ul>'+s.a.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>':`<p>${esc(s.a.join(' '))}</p>`}</div>`).join('')}`}
+function curText(){const p=D.papers.find(x=>x.id==PID);return p.title+'\n'+MODE.toUpperCase()+' READ\n\n'+stext(secs(p,MODE),p)}
+function saveSum(){const p=D.papers.find(x=>x.id==PID);p.saved={mode:MODE,t:Date.now(),text:curText()};act('Saved summary: '+p.title);save();R()}
+function copyT(t){const ok=()=>toast('Copied to clipboard');if(navigator.clipboard)navigator.clipboard.writeText(t).then(ok,()=>fb());else fb();function fb(){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){toast('Copy failed')}a.remove()}}
+async function dlSum(){const t=curText();try{const d=window.claude&&await claude.use('downloads');if(d){await d.save({filename:'summary.txt',data:t});return}}catch(e){if(e&&e.code=='not_granted')return}
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download='summary.txt';a.click();toast('If nothing downloaded, use Copy instead')}
+function textV(p){let h=esc(p.text);p.hl.forEach(x=>{const e=esc(x);if(e)h=h.split(e).join('<mark>'+e+'</mark>')});
+return`<div class="card"><p class="m">Select text in the paper, then click Highlight.</p><button class="pri" onclick="hl()">Highlight selection</button><pre class="tx">${h}</pre></div>${p.hl.length?`<div class="card"><h3>Highlights</h3>${p.hl.map((x,i)=>`<div class="row"><span><mark>${esc(x)}</mark></span><button onclick="unhl(${i})">Remove</button></div>`).join('')}</div>`:''}`}
+function hl(){const p=D.papers.find(x=>x.id==PID),s=String(getSelection()).trim();if(s.length<4||!p.text.includes(s))return toast('Select a passage (4+ characters) within a single paragraph');p.hl.push(s);save();R()}
+function unhl(i){D.papers.find(x=>x.id==PID).hl.splice(i,1);save();R()}
+const notesV=p=>`<div class="card"><textarea id="nt" rows="10" placeholder="Your research notes">${esc(p.notes)}</textarea><button class="pri" onclick="saveN()">Save notes</button></div>`;
+function saveN(){D.papers.find(x=>x.id==PID).notes=$('nt').value;save();toast('Notes saved')}
+const infoV=p=>`<div class="card">${[['it','Title',p.title],['ia','Authors',p.authors],['iy','Publication year',p.year],['ik','Keywords (comma separated)',p.kw]].map(x=>`<label class="m">${x[1]}</label><input id="${x[0]}" value="${esc(x[2])}">`).join('')}<button class="pri" onclick="saveI()">Save details</button></div>`;
+function saveI(){const p=D.papers.find(x=>x.id==PID);p.title=$('it').value||p.title;p.authors=$('ia').value;p.year=$('iy').value;p.kw=$('ik').value;delete CACHE[p.id];save();R()}
+function adminV(){const st=ADM,sum=k=>st.reduce((a,u)=>a+u[k],0);
+return`<h2>Admin dashboard</h2><div class="grid"><div class="card stat"><span class="m">Students</span><b>${st.length}</b></div><div class="card stat"><span class="m">Skills</span><b>${sum('skills')}</b></div><div class="card stat"><span class="m">Papers</span><b>${sum('papers')}</b></div></div>
+<div class="card wrap"><h3>Registered students</h3><p class="m">Admins see account and usage counts only, not students’ notes or paper contents.</p><table><tr><th>Name</th><th>Email</th><th>Skills</th><th>Certs</th><th>Papers</th><th>Joined</th><th></th></tr>${st.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${u.skills}</td><td>${u.certs}</td><td>${u.papers}</td><td>${new Date(u.joined).toLocaleDateString()}</td><td><button onclick="delU('${u.id}')">${DEL==u.id?'Confirm?':'Remove'}</button></td></tr>`).join('')||'<tr><td colspan="7" class="m">No students yet.</td></tr>'}</table></div>`}
+async function delU(id){if(DEL!=id){DEL=id;return R()}try{await api('/api/admin/users/'+id,'DELETE');ADM=ADM.filter(u=>u.id!=id)}catch(e){toast(e.message)}DEL=null;R()}
+api('/api/me').then(r=>start(r.user,r.data)).catch(()=>R());
+</script></body></html>
