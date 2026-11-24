@@ -1,4 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>SkillBridge</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
 <style>
 :root{--bg:#f5f6fb;--c:#fff;--t:#1b1f33;--m:#666c86;--p:#4f46e5;--b:#e2e4ef;--g:#16a34a;--mk:#fde68a;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#12141f;--c:#1c2033;--t:#eceefa;--m:#9aa0bd;--p:#8b87ff;--b:#2c3150;--mk:#6b5b00;color-scheme:dark}}
@@ -18,6 +19,9 @@ input,select,textarea{width:100%;margin:4px 0}input[type=range]{padding:0}
 .auth{max-width:400px;margin:8vh auto}.row{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
 pre.tx{white-space:pre-wrap;font:inherit;max-height:60vh;overflow:auto}mark{background:var(--mk);color:inherit}
 table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:6px;border-bottom:1px solid var(--b)}.wrap{overflow-x:auto}
+header{position:relative}.brand{display:flex;align-items:center;gap:8px;color:inherit;text-decoration:none;font-size:18px}.menu{position:relative}.burger{padding:6px 8px;line-height:0}
+.panel{display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--c);border:1px solid var(--b);border-radius:10px;padding:6px;min-width:200px;flex-direction:column;gap:4px;z-index:5;box-shadow:0 6px 20px rgba(0,0,0,.18)}.panel.open{display:flex}.panel button{text-align:left;border:0}
+.hero{text-align:center;padding:36px 0}.hero h1{font-size:40px;margin:10px 0 4px}.hero p{color:var(--m);max-width:540px;margin:0 auto 18px}.hero svg{width:72px;height:72px}
 #ts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--t);color:var(--bg);padding:8px 16px;border-radius:8px;display:none;z-index:9}
 </style></head><body><div id="app"></div><div id="ts"></div>
 <script>
@@ -30,14 +34,29 @@ function save(){clearTimeout(T);T=setTimeout(()=>api('/api/data','PUT',D).catch(
 function toast(m){const t=$('ts');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3200)}
 const act=m=>{D.acts.unshift({t:Date.now(),m});D.acts=D.acts.slice(0,15)};
 async function start(u,d){U=u;D=d;V=u.role=='admin'?'admin':'dash';if(u.role=='admin'){try{ADM=(await api('/api/admin/users')).users}catch(e){}}R()}
-async function out(){try{await api('/api/logout','POST')}catch(e){}U=D=null;AM='login';R()}
+async function out(){try{await api('/api/logout','POST')}catch(e){}U=D=null;AM='login';GV='home';R()}
 async function auth(){const e=$('e').value.trim().toLowerCase(),p=$('pw').value,n=AM=='reg'?$('n').value.trim():'';
 try{const r=await api(AM=='reg'?'/api/register':'/api/login','POST',{email:e,password:p,name:n,role:AM=='admin'?'admin':'student'});const reg=AM=='reg';await start(r.user,r.data);if(reg){act('Joined SkillBridge');save()}}catch(x){toast(x.message)}}
 async function demo(){try{const r=await api('/api/login','POST',{email:'demo@skillbridge.edu',password:'Demo@123',role:'student'});await start(r.user,r.data)}catch(x){toast(x.message)}}
-function R(){const a=$('app');if(!U){a.innerHTML=authV();return}
+const LOGO='<svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--p)"/><path d="M5 22h22M9 22V12M23 22V12M9 12c3 7 11 7 14 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+BURGER='<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+let GV='home';
+const go=v=>{V=v;R()},
+STU=[['Home',"go('home')"],['Dashboard',"go('dash')"],['SkillTrack',"go('skills')"],['ResearchBridge',"go('research')"],['Logout','out()']],
+ADMN=[['Admin dashboard',"go('admin')"],['Logout','out()']],
+OUTM=[['Home',"GV='home';R()"],['Login',"AM='login';GV='auth';R()"],['Register',"AM='reg';GV='auth';R()"],['Try the demo','demo()']];
+function hdr(items){return`<header><a class="brand" href="#" onclick="${U?(U.role=='admin'?"go('admin')":"go('home')"):"GV='home';R()"};return false">${LOGO}<b>SkillBridge${U&&U.role=='admin'?' · Admin':''}</b></a><span class="m">${U?esc(U.name):''}</span><div class="menu"><button class="burger" aria-label="Menu" onclick="$('mn').classList.toggle('open')">${BURGER}</button><div id="mn" class="panel">${items.map(x=>`<button onclick="${x[1]}">${x[0]}</button>`).join('')}</div></div></header>`}
+document.addEventListener('click',e=>{const m=$('mn');if(m&&!e.target.closest('.menu'))m.classList.remove('open')});
+function homeV(){const cta=U?`<button class="pri" onclick="go('${U.role=='admin'?'admin':'dash'}')">Go to Dashboard</button>`:`<button class="pri" onclick="AM='reg';GV='auth';R()">Get started</button> <button onclick="AM='login';GV='auth';R()">Login</button> <button onclick="demo()">Try the demo</button>`;
+return`<section class="hero">${LOGO}<h1>SkillBridge</h1><p>Manage your skills and understand research papers faster, all in one place.</p><div>${cta}</div></section>
+<div class="grid2"><div class="card"><h3>SkillTrack</h3><p class="m">Add skills, set goals, update your progress and store certifications, with charts that show how you are growing.</p></div>
+<div class="card"><h3>ResearchBridge</h3><p class="m">Upload PDF papers, keep a personal library, save notes and highlights, and use the Quick Research Reader for one-minute, five-minute and deep summaries.</p></div></div>
+<div class="card"><h3>How it works</h3><ol><li>Create a free student account.</li><li>Add your skills and certificates.</li><li>Upload a research paper and read a short summary made from its own text.</li></ol></div>
+<p class="m" style="text-align:center">SkillBridge · Student project</p>`}
+function R(){const a=$('app');
+if(!U){a.innerHTML=hdr(OUTM)+'<main>'+(GV=='auth'?authV():homeV())+'</main>';return}
 if(U.role!='admin'&&V=='admin')V='dash';if(U.role=='admin')V='admin';
-const nav=U.role=='admin'?'':`<nav>${[['dash','Dashboard'],['skills','SkillTrack'],['research','ResearchBridge']].map(([k,l])=>`<button class="${V==k||(k=='research'&&V=='paper')?'on':''}" onclick="V='${k}';R()">${l}</button>`).join('')}</nav>`;
-a.innerHTML=`<header><b>SkillBridge${U.role=='admin'?' · Admin':''}</b>${nav}<span class="m">${esc(U.name)} <button onclick="out()">Logout</button></span></header><main>${({dash:dashV,skills:skillV,research:resV,paper:paperV,admin:adminV})[V]()}</main>`}
+a.innerHTML=hdr(U.role=='admin'?ADMN:STU)+`<main>${({home:homeV,dash:dashV,skills:skillV,research:resV,paper:paperV,admin:adminV})[V]()}</main>`}
 function authV(){return`<div class="auth card"><h1 style="margin:0">SkillBridge</h1><p class="m">SkillTrack + ResearchBridge: skills, certifications and research in one place.</p>
 <div class="tabs">${[['login','Student login'],['reg','Register'],['admin','Admin']].map(([k,l])=>`<button class="${AM==k?'on':''}" onclick="AM='${k}';R()">${l}</button>`).join('')}</div>
 ${AM=='reg'?'<input id="n" placeholder="Full name">':''}<input id="e" type="email" placeholder="Email" ${AM=='admin'?'value="admin@skillbridge.edu"':''}><input id="pw" type="password" placeholder="Password (min 6 characters)" onkeydown="event.key=='Enter'&&auth()">
